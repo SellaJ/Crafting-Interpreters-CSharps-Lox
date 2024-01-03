@@ -9,12 +9,16 @@ class Program
             Environment.Exit(64);
         }
         string outputDir = args[0];
-        DefineAst(outputDir, "Expr", new List<string>
-        {
-            "Binary   : Expr Left, Token Operator, Expr Right",
-            "Grouping : Expr Expression",
-            "Literal  : Object Value",
-            "Unary    : Token Operator, Expr Right"
+        //DefineAst(outputDir, "Expr", new List<string>
+        //{
+        //    "Binary   : Expr Left, Token Operator, Expr Right",
+        //    "Grouping : Expr Expression",
+        //    "Literal  : Object Value",
+        //    "Unary    : Token Operator, Expr Right"
+        //});
+        DefineAst(outputDir, "Stmt", new List<string>() {
+            "Expresion : Expr expression",
+            "Print     : Expr expression" 
         });
     }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Statement;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,21 +19,42 @@ namespace Lox
             _current = 0;
         }
 
-        public Expr Parse()
+        public List<Stmt> Parse()
         {
-            try
-            {
-                return Expression();
+            List<Stmt> statements = new List<Stmt>();
+
+            while(!IsAtEnd()) {
+                statements.Add(Statement());
             }
-            catch (ParseError error)
-            {
-                return null;
-            }
+
+            return statements;
         }
+
 
         private Expr Expression()
         {
             return Comma();
+        }
+
+        private Stmt Statement()
+        {
+            if (match(TokenType.PRINT)) return PrintStatement();
+
+            return ExpressionStatement();
+        }
+
+        private Stmt ExpressionStatement()
+        {
+            Expr expr = Expression();
+            Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+            return new Statement.Expresion(expr);
+        }
+
+        private Stmt PrintStatement()
+        {
+            Expr value = Expression();
+            Consume(TokenType.SEMICOLON, "Expect ';' after value.");
+            return new Statement.Print(value);
         }
 
         private Expr Comma()

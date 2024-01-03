@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using Lox;
+using Statement;
 
 class CsLox
 {
@@ -49,11 +50,11 @@ class CsLox
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.ScanTokens();
         Parser parser = new Parser(tokens);
-        Expr expression = parser.Parse();
+        List<Stmt> statements = parser.Parse();
 
         if (hadError) return;
 
-        inteprter.Interpret(expression);
+        inteprter.Interpret(statements);
     }
 
     internal static void Error(int line, string message)
