@@ -45,6 +45,16 @@ namespace Lox
         {
             return expr.Accept(this);
         }
+
+        public string VisitVariableExpr(Variable expr)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitAssignExpr(Assign expr)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class RpnAstPrinter : Visitor<string>
@@ -86,6 +96,16 @@ namespace Lox
         public string Print(Expr expr)
         {
             return expr.Accept(this);
+        }
+
+        public string VisitVariableExpr(Variable expr)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitAssignExpr(Assign expr)
+        {
+            throw new NotImplementedException();
         }
     }
 }

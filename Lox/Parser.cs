@@ -23,24 +23,67 @@ namespace Lox
         {
             List<Stmt> statements = new List<Stmt>();
 
-            while(!IsAtEnd()) {
-                statements.Add(Statement());
+            while (!IsAtEnd())
+            {
+                statements.Add(Decleration());
             }
 
             return statements;
         }
 
+        private Stmt Decleration()
+        {
+            try
+            {
+                if (Match(TokenType.VAR)) return VarDecleration();
+
+                return Statement();
+            }
+            catch (ParseError e)
+            {
+                Synchtonize();
+                return null;
+            }
+        }
+
+        private Stmt VarDecleration()
+        {
+            Token name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
+
+            Expr initializer = null;
+            if (Match(TokenType.EQUAL))
+            {
+                initializer = Expression();
+            }
+
+            Consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+            return new Var(name, initializer);
+        }
 
         private Expr Expression()
         {
-            return Comma();
+            return Assignment();
         }
 
         private Stmt Statement()
         {
-            if (match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.LEFT_BRACE)) return new Block(Block());
 
             return ExpressionStatement();
+        }
+
+        private List<Stmt> Block()
+        {
+            List<Stmt> statements = new List<Stmt>();
+
+            while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
+            {
+                statements.Add(Decleration());
+            }
+
+            Consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+            return statements;
         }
 
         private Stmt ExpressionStatement()
@@ -61,7 +104,7 @@ namespace Lox
         {
             Expr expr = Equality();
 
-            while (match(TokenType.COMMA))
+            while (Match(TokenType.COMMA))
             {
                 Token Operator = Previous();
                 Expr right = Equality();
@@ -71,11 +114,31 @@ namespace Lox
             return expr;
         }
 
+        private Expr Assignment()
+        {
+            Expr expr = Comma();
+            if (Match(TokenType.EQUAL))
+            {
+                Token equals = Previous();
+                Expr value = Comma();
+
+                if (expr is Variable)
+                {
+                    Token name = ((Variable)expr).Name;
+                    return new Assign(name, value);
+                }
+
+                Error(equals, "Invalid assignment target.");
+            }
+
+            return expr;
+        }
+
         private Expr conditional()
         {
             Expr expr = Equality();
 
-            if (match(TokenType.QUESTION))
+            if (Match(TokenType.QUESTION))
             {
                 Expr thenBranch = Expression();
                 Consume(TokenType.COLON,
@@ -91,7 +154,7 @@ namespace Lox
         {
             Expr expr = Comparison();
 
-            while (match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))
+            while (Match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))
             {
                 Token Operator = Previous();
                 Expr right = Comparison();
@@ -106,7 +169,7 @@ namespace Lox
             return _tokens[_current - 1];
         }
 
-        private bool match(params TokenType[] types)
+        private bool Match(params TokenType[] types)
         {
             foreach (var type in types)
             {
@@ -146,7 +209,7 @@ namespace Lox
         {
             Expr expr = Term();
 
-            while (match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL))
+            while (Match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL))
             {
                 Token Operator = Previous();
                 Expr right = Term();
@@ -160,7 +223,7 @@ namespace Lox
         {
             Expr expr = Factor();
 
-            while (match(TokenType.MINUS, TokenType.PLUS))
+            while (Match(TokenType.MINUS, TokenType.PLUS))
             {
                 Token Operator = Previous();
                 Expr right = Factor();
@@ -174,7 +237,7 @@ namespace Lox
         {
             Expr expr = unary();
 
-            while (match(TokenType.SLASH, TokenType.STAR))
+            while (Match(TokenType.SLASH, TokenType.STAR))
             {
                 Token Operator = Previous();
                 Expr right = unary();
@@ -186,7 +249,7 @@ namespace Lox
 
         private Expr unary()
         {
-            if (match(TokenType.MINUS, TokenType.BANG))
+            if (Match(TokenType.MINUS, TokenType.BANG))
             {
                 Token Operator = Previous();
                 Expr right = unary();
@@ -198,16 +261,21 @@ namespace Lox
 
         private Expr Primary()
         {
-            if (match(TokenType.FALSE)) return new Literal(false);
-            if (match(TokenType.TRUE)) return new Literal(true);
-            if (match(TokenType.NIL)) return new Literal(null);
+            if (Match(TokenType.FALSE)) return new Literal(false);
+            if (Match(TokenType.TRUE)) return new Literal(true);
+            if (Match(TokenType.NIL)) return new Literal(null);
 
-            if (match(TokenType.NUMBER, TokenType.STRING))
+            if (Match(TokenType.NUMBER, TokenType.STRING))
             {
                 return new Literal(Previous().Literal);
             }
 
-            if (match(TokenType.LEFT_PARN))
+            if (Match(TokenType.IDENTIFIER))
+            {
+                return new Variable(Previous());
+            }
+
+            if (Match(TokenType.LEFT_PARN))
             {
                 Expr expr = Expression();
                 Consume(TokenType.RIGHT_PARN, "Expect ')' aftrer expression.");
@@ -215,28 +283,28 @@ namespace Lox
             }
 
             // Error productions.
-            if (match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))
+            if (Match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL))
             {
                 CsLox.Error(Previous(), "Missing left-hand operand.");
                 Equality();
                 return null;
             }
 
-            if (match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL))
+            if (Match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL))
             {
                 CsLox.Error(Previous(), "Missing left-hand operand.");
                 Comparison();
                 return null;
             }
 
-            if (match(TokenType.PLUS))
+            if (Match(TokenType.PLUS))
             {
                 CsLox.Error(Previous(), "Missing left-hand operand.");
                 Term();
                 return null;
             }
 
-            if (match(TokenType.SLASH, TokenType.STAR))
+            if (Match(TokenType.SLASH, TokenType.STAR))
             {
                 CsLox.Error(Previous(), "Missing left-hand operand.");
                 Factor();

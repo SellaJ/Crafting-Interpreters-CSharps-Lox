@@ -9,6 +9,8 @@ namespace Lox;
 
 public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
 {
+    private Lox.Environment environment = new();
+
     public void Interpret(List<Stmt> statements)
     {
         try
@@ -23,7 +25,6 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
             CsLox.RuntimeError(error);
         }
     }
-
 
     public object VisitBinaryExpr(Binary expr)
     {
@@ -117,6 +118,37 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
         return null;
     }
 
+    public object VisitVariableExpr(Variable expr)
+    {
+        return environment.Get(expr.Name);
+    }
+    public LoxVoid VisitVarStmt(Var stmt)
+    {
+        object value = null;
+        if (stmt.initializer != null)
+        {
+            value = Evaluate(stmt.initializer);
+        }
+
+        environment.Define(stmt.name.Lexeme, value);
+        return null;
+    }
+
+
+    public object VisitAssignExpr(Assign expr)
+    {
+        object value = Evaluate(expr.value);
+        environment.Assign(expr.name, value);
+        return value;
+    }
+
+    public LoxVoid VisitBlockStmt(Block stmt)
+    {
+        ExecuteBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+
     private string Stringify(object obj)
     {
         if (obj == null)
@@ -141,6 +173,22 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
     private void Execute(Stmt stmt)
     {
         stmt.Accept(this);
+    }
+    private void ExecuteBlock(List<Stmt> statements, Environment environment)
+    {
+        Environment previous = this.environment;
+        try
+        {
+            this.environment = environment;
+            foreach (Stmt statement in statements)
+            {
+                Execute(statement);
+            }
+        }
+        finally
+        {
+            this.environment = previous;
+        }
     }
 
     private void CheckNumberOperands(Token @operator, object left, object right)
@@ -179,5 +227,4 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
     {
         return expr.Accept(this);
     }
-
 }

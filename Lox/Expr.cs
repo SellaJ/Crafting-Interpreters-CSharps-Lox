@@ -6,10 +6,24 @@ public abstract class Expr
 }
 public interface Visitor<R>
 {
+    R VisitAssignExpr(Assign expr);
     R VisitBinaryExpr(Binary expr);
     R VisitGroupingExpr(Grouping expr);
     R VisitLiteralExpr(Literal expr);
     R VisitUnaryExpr(Unary expr);
+    R VisitVariableExpr(Variable expr);
+}
+public class Assign : Expr
+{
+    public Assign(Token name, Expr value)
+    {
+        this.name = name;
+        this.value = value;
+
+    }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitAssignExpr(this); }
+    internal Token name { get; }
+    internal Expr value { get; }
 }
 public class Binary : Expr
 {
@@ -57,23 +71,13 @@ public class Unary : Expr
     internal Token Operator { get; }
     internal Expr Right { get; }
 }
-
-
-public class Conditional : Expr
+public class Variable : Expr
 {
-    private Expr expr;
-    private Expr thenBranch;
-    private Expr elseBranch;
-
-    public Conditional(Expr expr, Expr thenBranch, Expr elseBranch)
+    public Variable(Token Name)
     {
-        this.expr = expr;
-        this.thenBranch = thenBranch;
-        this.elseBranch = elseBranch;
-    }
+        this.Name = Name;
 
-    public override R Accept<R>(Visitor<R> visitor)
-    {
-        throw new NotImplementedException();
     }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitVariableExpr(this); }
+    internal Token Name { get; }
 }

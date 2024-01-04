@@ -14,7 +14,7 @@ class CsLox
         if (args.Length > 1)
         {
             Console.WriteLine("Usage: cslox [script]");
-            Environment.Exit(64);
+            System.Environment.Exit(64);
         }
         else if (args.Length == 1)
         {
@@ -41,8 +41,8 @@ class CsLox
     private static void RunFile(string path)
     {
         Run(File.ReadAllText(path));
-        if (hadError) Environment.Exit(65);
-        if (hadRuntimeError) Environment.Exit(70);
+        if (hadError) System.Environment.Exit(65);
+        if (hadRuntimeError) System.Environment.Exit(70);
     }
 
     private static void Run(string source)

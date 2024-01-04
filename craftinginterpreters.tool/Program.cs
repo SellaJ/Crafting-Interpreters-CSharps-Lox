@@ -9,23 +9,27 @@ class Program
             Environment.Exit(64);
         }
         string outputDir = args[0];
-        //DefineAst(outputDir, "Expr", new List<string>
-        //{
-        //    "Binary   : Expr Left, Token Operator, Expr Right",
-        //    "Grouping : Expr Expression",
-        //    "Literal  : Object Value",
-        //    "Unary    : Token Operator, Expr Right"
-        //});
-        DefineAst(outputDir, "Stmt", new List<string>() {
+        DefineAst(outputDir, "Lox", "Expr", new List<string>
+        {
+            "Assign   : Token name, Expr value",
+            "Binary   : Expr Left, Token Operator, Expr Right",
+            "Grouping : Expr Expression",
+            "Literal  : Object Value",
+            "Unary    : Token Operator, Expr Right",
+            "Variable : Token Name"
+        });
+        DefineAst(outputDir, "Statement", "Stmt", new List<string>() {
+            "Block     : List<Stmt> statements",
             "Expresion : Expr expression",
-            "Print     : Expr expression" 
+            "Print     : Expr expression",
+            "Var       : Token name, Expr initializer"
         });
     }
 
-    private static void DefineAst(string outputDir, string baseName, List<string> types)
+    private static void DefineAst(string outputDir, string @namespace, string baseName, List<string> types)
     {
         string path = Path.Combine(outputDir, baseName + ".cs");
-        File.WriteAllText(path, @"namespace Lox;
+        File.WriteAllText(path, @$"namespace {@namespace};
                                   public abstract class " + baseName + "\n     {" + "\n        ");
 
         // The base accept method
@@ -33,7 +37,7 @@ class Program
         File.AppendAllText(path, $" public abstract R Accept<R>(Visitor<R> visitor);\n");
 
         File.AppendAllText(path, "}");
-        
+
         DefineVisitor(path, baseName, types);
 
         foreach (var type in types)
