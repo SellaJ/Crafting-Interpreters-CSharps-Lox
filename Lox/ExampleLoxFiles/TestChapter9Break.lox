@@ -1,0 +1,8 @@
+var i = 0;
+while(true)
+{
+	print i;
+	break;
+}
+
+print "worked";

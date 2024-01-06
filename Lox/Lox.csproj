@@ -8,10 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="TestChapter8.lox">
+    <None Update="ExampleLoxFiles\TestChapter8.lox">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="TextChapter8_2.lox">
+    <None Update="ExampleLoxFiles\TestChapter9.lox">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ExampleLoxFiles\TestChapter9Break.lox">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ExampleLoxFiles\TextChapter8_2.lox">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -9,9 +9,12 @@ public abstract class Stmt
 public interface Visitor<R>
 {
     R VisitBlockStmt(Block stmt);
-    R VisitExpresionStmt(Expresion stmt);
+    R VisitBreakStmt(Break stmt);
+    R VisitExpressionStmt(Expression stmt);
+    R VisitIfStmt(If stmt);
     R VisitPrintStmt(Print stmt);
     R VisitVarStmt(Var stmt);
+    R VisitWhileStmt(While stmt);
 }
 public class Block : Stmt
 {
@@ -23,15 +26,37 @@ public class Block : Stmt
     public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitBlockStmt(this); }
     internal List<Stmt> statements { get; }
 }
-public class Expresion : Stmt
+public class Break : Stmt
 {
-    public Expresion(Expr expression)
+    public Break()
+    {
+
+    }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitBreakStmt(this); }
+}
+public class Expression : Stmt
+{
+    public Expression(Expr expression)
     {
         this.expression = expression;
 
     }
-    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitExpresionStmt(this); }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitExpressionStmt(this); }
     internal Expr expression { get; }
+}
+public class If : Stmt
+{
+    public If(Expr condition, Stmt thenBranch, Stmt elseBranch)
+    {
+        this.condition = condition;
+        this.thenBranch = thenBranch;
+        this.elseBranch = elseBranch;
+
+    }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitIfStmt(this); }
+    internal Expr condition { get; }
+    internal Stmt thenBranch { get; }
+    internal Stmt elseBranch { get; }
 }
 public class Print : Stmt
 {
@@ -54,4 +79,16 @@ public class Var : Stmt
     public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitVarStmt(this); }
     internal Token name { get; }
     internal Expr initializer { get; }
+}
+public class While : Stmt
+{
+    public While(Expr condition, Stmt body)
+    {
+        this.condition = condition;
+        this.body = body;
+
+    }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitWhileStmt(this); }
+    internal Expr condition { get; }
+    internal Stmt body { get; }
 }

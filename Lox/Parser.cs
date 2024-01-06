@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace Lox
     {
         private List<Token> _tokens;
         private int _current;
+        private int loopDepth = 0;
 
         public Parser(List<Token> tokens)
         {
@@ -41,7 +43,7 @@ namespace Lox
             }
             catch (ParseError e)
             {
-                Synchtonize();
+                Syncronize();
                 return null;
             }
         }
@@ -67,10 +69,116 @@ namespace Lox
 
         private Stmt Statement()
         {
+            if (Match(TokenType.BREAK)) return BreakStatement();
+            if (Match(TokenType.FOR)) return ForStatement();
+            if (Match(TokenType.IF)) return IfStatement();
             if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.WHILE)) return WhileStatement();
             if (Match(TokenType.LEFT_BRACE)) return new Block(Block());
 
             return ExpressionStatement();
+        }
+
+        private Stmt BreakStatement()
+        {
+            if(loopDepth == 0)
+            {
+                Error(Previous(), "Must be inside a loop to use 'break'.");
+            }
+            Consume(TokenType.SEMICOLON, "Expected ';' after break");
+            return new Break();
+        }
+
+        private Stmt ForStatement()
+        {
+            Consume(TokenType.LEFT_PARN, "Expect '(' after 'for'.");
+            Stmt initializer;
+            if (Match(TokenType.SEMICOLON))
+            {
+                initializer = null;
+            }
+            else if (Match(TokenType.VAR))
+            {
+                initializer = VarDecleration();
+            }
+            else initializer = ExpressionStatement();
+
+            Expr condition = null;
+            if (!Check(TokenType.SEMICOLON))
+            {
+                condition = Expression();
+            }
+            Consume(TokenType.SEMICOLON, "Expect ';' after loop condition");
+
+            Expr increment = null;
+
+            if (!Check(TokenType.RIGHT_PARN))
+            {
+                increment = Expression();
+            }
+            Consume(TokenType.RIGHT_PARN, "Expect ')' after for clauses.");
+
+            try
+            {
+                loopDepth++;
+                Stmt body = Statement();
+                if (increment != null)
+                {
+                    body = new Block(new List<Stmt> { body, new Statement.Expression(increment) });
+                }
+
+                if (condition == null)
+                {
+                    condition = new Literal(true);
+                }
+
+                body = new While(condition, body);
+
+                if (initializer != null)
+                {
+                    body = new Block(new List<Stmt> { initializer, body });
+                }
+
+                return body;
+            }
+            finally
+            {
+                loopDepth--;
+            }
+        }
+
+        private Stmt WhileStatement()
+        {
+            Consume(TokenType.LEFT_PARN, "Expect '(' aftrer 'while'.");
+            Expr condition = Expression();
+            Consume(TokenType.RIGHT_PARN, "Expect ')' after condition.");
+            try
+            {
+                loopDepth++;
+                Stmt body = Statement();
+
+                return new While(condition, body);
+            }
+            finally
+            {
+                loopDepth--;
+            }
+        }
+
+        private Stmt IfStatement()
+        {
+            Consume(TokenType.LEFT_PARN, "Expect '(' after 'if'.");
+            Expr condition = Expression();
+            Consume(TokenType.RIGHT_PARN, "Expect ')' after if condition");
+
+            Stmt thenBranch = Statement();
+            Stmt elseBranch = Statement();
+            if (Match(TokenType.ELSE))
+            {
+                elseBranch = Statement();
+            }
+
+            return new If(condition, thenBranch, elseBranch);
         }
 
         private List<Stmt> Block()
@@ -90,7 +198,7 @@ namespace Lox
         {
             Expr expr = Expression();
             Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
-            return new Statement.Expresion(expr);
+            return new Statement.Expression(expr);
         }
 
         private Stmt PrintStatement()
@@ -116,7 +224,8 @@ namespace Lox
 
         private Expr Assignment()
         {
-            Expr expr = Comma();
+            Expr expr = Or();
+
             if (Match(TokenType.EQUAL))
             {
                 Token equals = Previous();
@@ -129,6 +238,34 @@ namespace Lox
                 }
 
                 Error(equals, "Invalid assignment target.");
+            }
+
+            return expr;
+        }
+
+        private Expr Or()
+        {
+            Expr expr = And();
+
+            while (Match(TokenType.OR))
+            {
+                Token @operator = Previous();
+                Expr right = And();
+                expr = new Logical(expr, @operator, right);
+            }
+
+            return expr;
+        }
+
+        private Expr And()
+        {
+            Expr expr = Comma();
+
+            while (Match(TokenType.AND))
+            {
+                Token @operator = Previous();
+                Expr right = And();
+                expr = new Logical(expr, @operator, right);
             }
 
             return expr;
@@ -167,6 +304,17 @@ namespace Lox
         private Token Previous()
         {
             return _tokens[_current - 1];
+        }
+
+        private Token PreviousLoop()
+        {
+            for (int index = _current - 1; index >= 0; index--)
+            {
+                if (_tokens[index].Type == TokenType.WHILE || _tokens[index].Type == TokenType.FOR)
+                    return _tokens[index];
+            }
+
+            return null;
         }
 
         private bool Match(params TokenType[] types)
@@ -328,7 +476,7 @@ namespace Lox
             return new ParseError();
         }
 
-        private void Synchtonize()
+        private void Syncronize()
         {
             Advance();
 

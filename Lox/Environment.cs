@@ -24,7 +24,12 @@ namespace Lox
         {
             if (values.ContainsKey(name.Lexeme))
             {
-                return values[name.Lexeme];
+                var value = values[name.Lexeme];
+                if (value == null)
+                {
+                    throw new RuntimeError(name, $"Variable '{name.Lexeme}' is nil");
+                }
+                return value;
             }
 
             if(enclosing != null) return enclosing.Get(name);

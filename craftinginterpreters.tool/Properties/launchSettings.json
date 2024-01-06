@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "craftinginterpreters.tool": {
+      "commandName": "Project",
+      "commandLineArgs": "./"
+    }
+  }
+}

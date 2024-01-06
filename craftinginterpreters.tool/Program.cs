@@ -11,18 +11,24 @@ class Program
         string outputDir = args[0];
         DefineAst(outputDir, "Lox", "Expr", new List<string>
         {
-            "Assign   : Token name, Expr value",
+            "Assign   : Token Name, Expr Value",
             "Binary   : Expr Left, Token Operator, Expr Right",
             "Grouping : Expr Expression",
             "Literal  : Object Value",
+            "Logical  : Expr Left, Token Operator, Expr Right",
             "Unary    : Token Operator, Expr Right",
             "Variable : Token Name"
         });
+
         DefineAst(outputDir, "Statement", "Stmt", new List<string>() {
             "Block     : List<Stmt> statements",
-            "Expresion : Expr expression",
+            "Break     : ",
+            "Expression: Expr expression",
+            "If        : Expr condition, Stmt thenBranch,"+
+                       " Stmt elseBranch",
             "Print     : Expr expression",
-            "Var       : Token name, Expr initializer"
+            "Var       : Token name, Expr initializer",
+            "While     : Expr condition, Stmt body",
         });
     }
 
@@ -68,7 +74,7 @@ class Program
             "\n    {"
             + $"   public  {className} ({fields}) " + "\n     {\n");
 
-        string[] fieldsArray = fields.Split(", ");
+        string[] fieldsArray = fields.Length == 0 ? new string[0] : fields.Split(", ");
         foreach (var field in fieldsArray)
         {
             string name = field.Split(" ")[1];

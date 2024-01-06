@@ -19,7 +19,7 @@ namespace Lox
             { "and", TokenType.AND },
             { "class", TokenType.CLASS },
             { "else", TokenType.ELSE },
-            { "flase", TokenType.FALSE },
+            { "false", TokenType.FALSE },
             { "for", TokenType.FOR },
             { "fun", TokenType.FUN },
             { "if", TokenType.IF },
@@ -31,7 +31,8 @@ namespace Lox
             { "this", TokenType.THIS },
             { "true", TokenType.TRUE },
             { "var", TokenType.VAR },
-            { "while", TokenType.WHILE }
+            { "while", TokenType.WHILE },
+            { "break", TokenType.BREAK },
         };
 
         public Scanner(string source)

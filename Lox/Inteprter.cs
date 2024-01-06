@@ -82,13 +82,10 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
     {
         return Evaluate(expr.Expression);
     }
-
-
     public object VisitLiteralExpr(Literal expr)
     {
         return expr.Value;
     }
-
     public object VisitUnaryExpr(Unary expr)
     {
         object right = Evaluate(expr.Right);
@@ -104,23 +101,42 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
 
         return null;
     }
+    public object VisitAssignExpr(Assign expr)
+    {
+        object value = Evaluate(expr.Value);
+        environment.Assign(expr.Name, value);
+        return value;
+    }
+    public object VisitVariableExpr(Variable expr)
+    {
+        return environment.Get(expr.Name);
+    }
+    public object VisitLogicalExpr(Logical expr)
+    {
+        object left = Evaluate(expr.Left);
 
-    public LoxVoid VisitExpresionStmt(Statement.Expresion stmt)
+        if(expr.Operator.Type == TokenType.OR)
+        {
+            if (IsTruthy(left)) return left;
+        }
+        else
+        {
+            if(!IsTruthy(left)) return left;
+        }
+
+        return Evaluate(expr.Right);
+    }
+
+    public LoxVoid VisitExpresionStmt(Statement.Expression stmt)
     {
         Evaluate(stmt.expression);
         return null;
     }
-
     public LoxVoid VisitPrintStmt(Statement.Print stmt)
     {
         object value = Evaluate(stmt.expression);
         Console.WriteLine(Stringify(value));
         return null;
-    }
-
-    public object VisitVariableExpr(Variable expr)
-    {
-        return environment.Get(expr.Name);
     }
     public LoxVoid VisitVarStmt(Var stmt)
     {
@@ -133,21 +149,47 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
         environment.Define(stmt.name.Lexeme, value);
         return null;
     }
-
-
-    public object VisitAssignExpr(Assign expr)
-    {
-        object value = Evaluate(expr.value);
-        environment.Assign(expr.name, value);
-        return value;
-    }
-
     public LoxVoid VisitBlockStmt(Block stmt)
     {
         ExecuteBlock(stmt.statements, new Environment(environment));
         return null;
     }
+    public LoxVoid VisitIfStmt(If stmt)
+    {
+        if (IsTruthy(Evaluate(stmt.condition)))
+        {
+            Execute(stmt.thenBranch);
+        }
+        else
+        {
+            Execute(stmt.elseBranch);
+        }
 
+        return null;
+    }
+    public LoxVoid VisitWhileStmt(While stmt)
+    {
+        try
+        {
+            while (IsTruthy(Evaluate(stmt.condition)))
+            {
+                Execute(stmt.body);
+            }
+        }
+        catch (BreakException)
+        {
+        }
+       
+        return null;
+    }
+    public LoxVoid VisitExpressionStmt(Expression stmt)
+    {
+        throw new NotImplementedException();
+    }
+    public LoxVoid VisitBreakStmt(Break stmt)
+    {
+        throw new BreakException();
+    }
 
     private string Stringify(object obj)
     {
@@ -169,10 +211,9 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
         if (obj is string) return obj.ToString().Replace("\"", "");
         return obj.ToString();
     }
-
     private void Execute(Stmt stmt)
     {
-        stmt.Accept(this);
+         stmt.Accept(this);
     }
     private void ExecuteBlock(List<Stmt> statements, Environment environment)
     {
@@ -190,7 +231,6 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
             this.environment = previous;
         }
     }
-
     private void CheckNumberOperands(Token @operator, object left, object right)
     {
         if (left is double && right is double)
@@ -200,7 +240,6 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
 
         throw new RuntimeError(@operator, "Operands must be numbers.");
     }
-
     private bool IsEqual(object a, object b)
     {
         if (a == null && b == null) return true;
@@ -208,21 +247,17 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
 
         return a.Equals(b);
     }
-
-
     private void CheckNumberOperand(Token @operator, object operand)
     {
         if (operand is double) return;
         throw new RuntimeError(@operator, "Operand must be a numbewr.");
     }
-
     private bool IsTruthy(object obj)
     {
         if (obj == null) return false;
         if (obj is bool) return (bool)obj;
         return true;
     }
-
     private object Evaluate(Expr expr)
     {
         return expr.Accept(this);

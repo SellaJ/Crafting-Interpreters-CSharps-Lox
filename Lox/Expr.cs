@@ -10,20 +10,21 @@ public interface Visitor<R>
     R VisitBinaryExpr(Binary expr);
     R VisitGroupingExpr(Grouping expr);
     R VisitLiteralExpr(Literal expr);
+    R VisitLogicalExpr(Logical expr);
     R VisitUnaryExpr(Unary expr);
     R VisitVariableExpr(Variable expr);
 }
 public class Assign : Expr
 {
-    public Assign(Token name, Expr value)
+    public Assign(Token Name, Expr Value)
     {
-        this.name = name;
-        this.value = value;
+        this.Name = Name;
+        this.Value = Value;
 
     }
     public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitAssignExpr(this); }
-    internal Token name { get; }
-    internal Expr value { get; }
+    internal Token Name { get; }
+    internal Expr Value { get; }
 }
 public class Binary : Expr
 {
@@ -58,6 +59,20 @@ public class Literal : Expr
     }
     public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitLiteralExpr(this); }
     internal Object Value { get; }
+}
+public class Logical : Expr
+{
+    public Logical(Expr Left, Token Operator, Expr Right)
+    {
+        this.Left = Left;
+        this.Operator = Operator;
+        this.Right = Right;
+
+    }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitLogicalExpr(this); }
+    internal Expr Left { get; }
+    internal Token Operator { get; }
+    internal Expr Right { get; }
 }
 public class Unary : Expr
 {
