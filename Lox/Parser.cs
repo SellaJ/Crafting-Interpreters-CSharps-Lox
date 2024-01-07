@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Lox
 {
@@ -37,7 +38,11 @@ namespace Lox
         {
             try
             {
-                if (Match(TokenType.FUN)) return this.Function("function");
+                if (Check(TokenType.FUN) && CheckNext(TokenType.IDENTIFIER))
+                {
+                    Consume(TokenType.FUN, null);
+                    return this.Function("function");
+                }
                 if (Match(TokenType.VAR)) return VarDecleration();
 
                 return Statement();
@@ -49,9 +54,15 @@ namespace Lox
             }
         }
 
-        private Function Function(string kind)
+        private Statement.Function Function(string kind)
         {
             Token name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
+            return new Statement.Function(name, FunctionBody(kind));
+
+        }
+
+        private Function FunctionBody(string kind)
+        {
             Consume(TokenType.LEFT_PARN, $"Expect '(' after {kind} name.");
             List<Token> parameters = new List<Token>();
             if (!Check(TokenType.RIGHT_PARN))
@@ -70,7 +81,7 @@ namespace Lox
 
             Consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
             List<Stmt> body = Block();
-            return new Function(name, parameters, body);
+            return new Function(parameters, body);
         }
 
         private Stmt VarDecleration()
@@ -109,7 +120,7 @@ namespace Lox
         {
             Token keyword = Previous();
             Expr value = null;
-            if(!Check(TokenType.SEMICOLON))
+            if (!Check(TokenType.SEMICOLON))
             {
                 value = Expression();
             }
@@ -371,6 +382,12 @@ namespace Lox
             return Peek().Type == type;
         }
 
+        private bool CheckNext(TokenType tokenType)
+        {
+            if (IsAtEnd()) return false;
+            if (_tokens[_current + 1].Type == TokenType.EOF) return false;
+            return _tokens[_current + 1].Type == tokenType;
+        }
         private Token Peek()
         {
             return _tokens[_current];
@@ -479,6 +496,11 @@ namespace Lox
             if (Match(TokenType.FALSE)) return new Literal(false);
             if (Match(TokenType.TRUE)) return new Literal(true);
             if (Match(TokenType.NIL)) return new Literal(null);
+
+            if (Match(TokenType.FUN))
+            {
+                return FunctionBody("function");
+            }
 
             if (Match(TokenType.NUMBER, TokenType.STRING))
             {

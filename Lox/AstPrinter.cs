@@ -65,6 +65,11 @@ namespace Lox
         {
             throw new NotImplementedException();
         }
+
+        public string VisitFunctinExpr(Function expr)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class RpnAstPrinter : Visitor<string>
@@ -124,6 +129,11 @@ namespace Lox
         }
 
         public string VisitCallExpr(Call expr)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string VisitFunctinExpr(Function expr)
         {
             throw new NotImplementedException();
         }

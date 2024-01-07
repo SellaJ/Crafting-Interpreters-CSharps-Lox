@@ -155,6 +155,11 @@ public class Interpreter : Visitor<object>, Statement.Visitor<LoxVoid>
         }
         return function.Call(this, arguments);
     }
+    public object VisitFunctinExpr(Function expr)
+    {
+        return new LoxFunction(null, expr, environment);
+    }
+
     public LoxVoid VisitPrintStmt(Statement.Print stmt)
     {
         object value = Evaluate(stmt.expression);
@@ -214,10 +219,10 @@ public class Interpreter : Visitor<object>, Statement.Visitor<LoxVoid>
     {
         throw new BreakException();
     }
-    public LoxVoid VisitFunctionStmt(Function stmt)
+    public LoxVoid VisitFunctionStmt(Statement.Function stmt)
     {
-        LoxFunction function = new LoxFunction(stmt, environment);
-        environment.Define(stmt.name.Lexeme, function);
+        string fnName = stmt.name.Lexeme;
+        environment.Define(fnName, new LoxFunction(fnName, stmt.function, environment));
         return null;
     }
     public LoxVoid VisitReturnStmt(Statement.Return stmt)

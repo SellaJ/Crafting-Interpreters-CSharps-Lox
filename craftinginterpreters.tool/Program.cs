@@ -14,6 +14,7 @@ class Program
             "Assign   : Token Name, Expr Value",
             "Binary   : Expr Left, Token Operator, Expr Right",
             "Call     : Expr Callee, Token Paren, List<Expr> Arguments",
+            "Function : List<Token> Parameters, List<Stmt> Body",
             "Grouping : Expr Expression",
             "Literal  : Object Value",
             "Logical  : Expr Left, Token Operator, Expr Right",
@@ -25,7 +26,7 @@ class Program
             "Block     : List<Stmt> statements",
             "Break     : ",
             "Expression: Expr expression",
-            "Function  : Token name, List<Token> Params, List<Stmt> body",
+            "Function  : Token name, Lox.Function function",
             "If        : Expr condition, Stmt thenBranch,"+
                        " Stmt elseBranch",
             "Print     : Expr expression",

@@ -1,3 +1,5 @@
+using Statement;
+
 namespace Lox;
 public abstract class Expr
 {
@@ -9,6 +11,7 @@ public interface Visitor<R>
     R VisitAssignExpr(Assign expr);
     R VisitBinaryExpr(Binary expr);
     R VisitCallExpr(Call expr);
+    R VisitFunctinExpr(Function expr);
     R VisitGroupingExpr(Grouping expr);
     R VisitLiteralExpr(Literal expr);
     R VisitLogicalExpr(Logical expr);
@@ -54,6 +57,18 @@ public class Call : Expr
     internal Expr Callee { get; }
     internal Token Paren { get; }
     internal List<Expr> Arguments { get; }
+}
+public class Function : Expr
+{
+    public Function(List<Token> Parameters, List<Stmt> Body)
+    {
+        this.Parameters = Parameters;
+        this.Body = Body;
+
+    }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitFunctinExpr(this); }
+    internal List<Token> Parameters { get; }
+    internal List<Stmt> Body { get; }
 }
 public class Grouping : Expr
 {

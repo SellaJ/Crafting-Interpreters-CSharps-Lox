@@ -9,28 +9,30 @@ namespace Lox
 {
     public class LoxFunction : LoxCallable
     {
-        private Function decleration;
-        private Environment closure;
+        private readonly string name;
+        private readonly Lox.Function decleration;
+        private readonly Environment closure;
 
-        public LoxFunction(Function decleration, Environment closure)
+        public LoxFunction(string name, Lox.Function decleration, Environment closure)
         {
+            this.name = name;
             this.decleration = decleration;
             this.closure = closure;
         }
 
-        public int Arity => decleration.Params.Count;
+        public int Arity => decleration.Parameters.Count;
 
         public object Call(Interpreter interpreter, List<object> arguments)
         {
             Environment environment = new Environment(closure);
-            for (int i = 0; i < decleration.Params.Count; i++)
+            for (int i = 0; i < decleration.Parameters.Count; i++)
             {
-                environment.Define(decleration.Params[i].Lexeme, arguments[i]);
+                environment.Define(decleration.Parameters[i].Lexeme, arguments[i]);
             }
 
             try
             {
-                interpreter.ExecuteBlock(decleration.body, environment);
+                interpreter.ExecuteBlock(decleration.Body, environment);
             }
             catch (Return returnValue)
             {
@@ -42,7 +44,7 @@ namespace Lox
 
         public override string ToString()
         {
-            return $"<fn {decleration.name.Lexeme}>";
+            return $"<fn {name}>";
         }
     }
 }
