@@ -7,9 +7,16 @@ using System.Threading.Tasks;
 
 namespace Lox;
 
-public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
+public class Interpreter : Visitor<object>, Statement.Visitor<LoxVoid>
 {
-    private Lox.Environment environment = new();
+    internal Lox.Environment globals = new();
+    private Lox.Environment environment;
+
+    public Interpreter()
+    {
+        environment = globals;
+        globals.Define("clock", new ClockFunction());
+    }
 
     public void Interpret(List<Stmt> statements)
     {
@@ -25,7 +32,6 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
             CsLox.RuntimeError(error);
         }
     }
-
     public object VisitBinaryExpr(Binary expr)
     {
         object left = Evaluate(expr.Left);
@@ -115,22 +121,39 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
     {
         object left = Evaluate(expr.Left);
 
-        if(expr.Operator.Type == TokenType.OR)
+        if (expr.Operator.Type == TokenType.OR)
         {
             if (IsTruthy(left)) return left;
         }
         else
         {
-            if(!IsTruthy(left)) return left;
+            if (!IsTruthy(left)) return left;
         }
 
         return Evaluate(expr.Right);
     }
-
-    public LoxVoid VisitExpresionStmt(Statement.Expression stmt)
+    public object VisitCallExpr(Call expr)
     {
-        Evaluate(stmt.expression);
-        return null;
+        object callee = Evaluate(expr.Callee);
+
+        List<object> arguments = new List<object>();
+
+        foreach (Expr argument in expr.Arguments)
+        {
+            arguments.Add(Evaluate(argument));
+        }
+
+        if (!(callee is LoxCallable))
+        {
+            throw new RuntimeError(expr.Paren, "Can only call functions and classes.");
+        }
+
+        LoxCallable function = (LoxCallable)callee;
+        if (arguments.Count != function.Arity)
+        {
+            throw new RuntimeError(expr.Paren, $"Expected {function.Arity} arguments but got {arguments.Count}.");
+        }
+        return function.Call(this, arguments);
     }
     public LoxVoid VisitPrintStmt(Statement.Print stmt)
     {
@@ -179,16 +202,30 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
         catch (BreakException)
         {
         }
-       
+
         return null;
     }
     public LoxVoid VisitExpressionStmt(Expression stmt)
     {
-        throw new NotImplementedException();
+        Evaluate(stmt.expression);
+        return null;
     }
     public LoxVoid VisitBreakStmt(Break stmt)
     {
         throw new BreakException();
+    }
+    public LoxVoid VisitFunctionStmt(Function stmt)
+    {
+        LoxFunction function = new LoxFunction(stmt, environment);
+        environment.Define(stmt.name.Lexeme, function);
+        return null;
+    }
+    public LoxVoid VisitReturnStmt(Statement.Return stmt)
+    {
+        object value = null;
+        if(stmt.value != null) value = Evaluate(stmt.value);
+
+        throw new Return(value);
     }
 
     private string Stringify(object obj)
@@ -213,9 +250,9 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
     }
     private void Execute(Stmt stmt)
     {
-         stmt.Accept(this);
+        stmt.Accept(this);
     }
-    private void ExecuteBlock(List<Stmt> statements, Environment environment)
+    internal void ExecuteBlock(List<Stmt> statements, Environment environment)
     {
         Environment previous = this.environment;
         try
@@ -262,4 +299,5 @@ public class Inteprter : Visitor<object>, Statement.Visitor<LoxVoid>
     {
         return expr.Accept(this);
     }
+
 }

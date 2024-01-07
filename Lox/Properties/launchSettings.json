@@ -1,8 +1,7 @@
 {
   "profiles": {
     "Lox": {
-      "commandName": "Project",
-      "commandLineArgs": ".\\ExampleLoxFiles\\TestChapter9Break.lox"
+      "commandName": "Project"
     }
   }
 }

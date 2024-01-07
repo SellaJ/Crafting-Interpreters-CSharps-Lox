@@ -5,7 +5,7 @@ using Statement;
 
 class CsLox
 {
-    static Inteprter inteprter = new Inteprter();
+    static Interpreter inteprter = new Interpreter();
     static bool hadError = false;
     static bool hadRuntimeError = false;
 

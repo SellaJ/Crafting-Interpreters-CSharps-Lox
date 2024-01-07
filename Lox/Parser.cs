@@ -37,6 +37,7 @@ namespace Lox
         {
             try
             {
+                if (Match(TokenType.FUN)) return this.Function("function");
                 if (Match(TokenType.VAR)) return VarDecleration();
 
                 return Statement();
@@ -46,6 +47,30 @@ namespace Lox
                 Syncronize();
                 return null;
             }
+        }
+
+        private Function Function(string kind)
+        {
+            Token name = Consume(TokenType.IDENTIFIER, $"Expect {kind} name.");
+            Consume(TokenType.LEFT_PARN, $"Expect '(' after {kind} name.");
+            List<Token> parameters = new List<Token>();
+            if (!Check(TokenType.RIGHT_PARN))
+            {
+                do
+                {
+                    if (parameters.Count >= 255)
+                    {
+                        Error(Peek(), "Can't have more than 255 parameters.");
+                    }
+
+                    parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name"));
+                } while (Match(TokenType.COMMA));
+            }
+            Consume(TokenType.RIGHT_PARN, "Expect ')' after parameters.");
+
+            Consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+            List<Stmt> body = Block();
+            return new Function(name, parameters, body);
         }
 
         private Stmt VarDecleration()
@@ -73,15 +98,29 @@ namespace Lox
             if (Match(TokenType.FOR)) return ForStatement();
             if (Match(TokenType.IF)) return IfStatement();
             if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.RETURN)) return ReturnStatement();
             if (Match(TokenType.WHILE)) return WhileStatement();
             if (Match(TokenType.LEFT_BRACE)) return new Block(Block());
 
             return ExpressionStatement();
         }
 
+        private Stmt ReturnStatement()
+        {
+            Token keyword = Previous();
+            Expr value = null;
+            if(!Check(TokenType.SEMICOLON))
+            {
+                value = Expression();
+            }
+
+            Consume(TokenType.SEMICOLON, "Expect ';' after return value");
+            return new Statement.Return(keyword, value);
+        }
+
         private Stmt BreakStatement()
         {
-            if(loopDepth == 0)
+            if (loopDepth == 0)
             {
                 Error(Previous(), "Must be inside a loop to use 'break'.");
             }
@@ -306,17 +345,6 @@ namespace Lox
             return _tokens[_current - 1];
         }
 
-        private Token PreviousLoop()
-        {
-            for (int index = _current - 1; index >= 0; index--)
-            {
-                if (_tokens[index].Type == TokenType.WHILE || _tokens[index].Type == TokenType.FOR)
-                    return _tokens[index];
-            }
-
-            return null;
-        }
-
         private bool Match(params TokenType[] types)
         {
             foreach (var type in types)
@@ -383,28 +411,67 @@ namespace Lox
 
         private Expr Factor()
         {
-            Expr expr = unary();
+            Expr expr = Unary();
 
             while (Match(TokenType.SLASH, TokenType.STAR))
             {
                 Token Operator = Previous();
-                Expr right = unary();
+                Expr right = Unary();
                 expr = new Binary(expr, Operator, right);
             }
 
             return expr;
         }
 
-        private Expr unary()
+        private Expr Unary()
         {
             if (Match(TokenType.MINUS, TokenType.BANG))
             {
                 Token Operator = Previous();
-                Expr right = unary();
+                Expr right = Unary();
                 return new Unary(Operator, right);
             }
 
-            return Primary();
+            return Call();
+        }
+
+        private Expr Call()
+        {
+            Expr expr = Primary();
+
+            while (true)
+            {
+                if (Match(TokenType.LEFT_PARN))
+                {
+                    expr = FinishCall(expr);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return expr;
+        }
+
+        private Expr FinishCall(Expr calle)
+        {
+            List<Expr> arguments = new List<Expr>();
+            if (!Check(TokenType.RIGHT_PARN))
+            {
+                do
+                {
+                    if (arguments.Count >= 255)
+                    {
+                        Error(Peek(), "Cant have more than 255 arguments.");
+                    }
+                    arguments.Add(Equality());
+                } while (Match(TokenType.COMMA));
+            }
+
+            Token paren = Consume(TokenType.RIGHT_PARN, "Expect ')' after arguments.");
+
+            return new Call(calle, paren, arguments);
         }
 
         private Expr Primary()

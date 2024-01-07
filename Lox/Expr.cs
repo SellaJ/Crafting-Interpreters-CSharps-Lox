@@ -8,6 +8,7 @@ public interface Visitor<R>
 {
     R VisitAssignExpr(Assign expr);
     R VisitBinaryExpr(Binary expr);
+    R VisitCallExpr(Call expr);
     R VisitGroupingExpr(Grouping expr);
     R VisitLiteralExpr(Literal expr);
     R VisitLogicalExpr(Logical expr);
@@ -39,6 +40,20 @@ public class Binary : Expr
     internal Expr Left { get; }
     internal Token Operator { get; }
     internal Expr Right { get; }
+}
+public class Call : Expr
+{
+    public Call(Expr Callee, Token Paren, List<Expr> Arguments)
+    {
+        this.Callee = Callee;
+        this.Paren = Paren;
+        this.Arguments = Arguments;
+
+    }
+    public override R Accept<R>(Visitor<R> visitor) { return visitor.VisitCallExpr(this); }
+    internal Expr Callee { get; }
+    internal Token Paren { get; }
+    internal List<Expr> Arguments { get; }
 }
 public class Grouping : Expr
 {
